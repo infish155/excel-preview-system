@@ -31,7 +31,7 @@
 
 1.  **克隆仓库**
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/infish155/excel-preview-system
     cd excel-preview-system
     ```
 
