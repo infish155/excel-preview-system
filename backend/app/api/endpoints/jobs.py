@@ -1,19 +1,19 @@
-from fastapi import APIRouter
-from celery.result import AsyncResult
-from app.celery_app import celery
+from fastapi import APIRouter, HTTPException
+from app.processing import JOB_STATUS_CACHE
 
 router = APIRouter()
 
 @router.get("/{job_id}/status")
 async def get_job_status(job_id: str):
     """
-    Polls for the status of a background job.
+    Polls for the status of a background job from the in-memory cache.
     """
-    task_result = AsyncResult(job_id, app=celery)
+    status_info = JOB_STATUS_CACHE.get(job_id)
+    if not status_info:
+        raise HTTPException(status_code=404, detail="Job ID not found.")
 
-    response = {
+    return {
         "jobId": job_id,
-        "status": task_result.status,
-        "result": task_result.result or task_result.info,
+        "status": status_info["status"],
+        "result": status_info["result"],
     }
-    return response
