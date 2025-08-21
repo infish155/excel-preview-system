@@ -1,5 +1,12 @@
-
 services:
+  # Redis 服务
+  redis:
+    image: redis:7-alpine
+    container_name: excel_redis
+    ports:
+      - "6379:6379"
+
+  # FastAPI 后端服务 (保持不变)
   backend:
     build: ./backend
     container_name: excel_backend
@@ -8,9 +15,22 @@ services:
     volumes:
       - ./backend/app:/app/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - redis
+
+  # Celery Worker 服务
+  worker:
+    build: ./backend  # Worker 和 Backend 使用同一个镜像
+    container_name: excel_worker
+    command: celery -A app.celery_app.celery worker --loglevel=info
+    # volumes:
+    #   - ./backend/app:/app/app
+    depends_on:
+      - redis
+      - backend
 
   frontend:
-    build: 
+    build:
       context: ./frontend
       dockerfile: Dockerfile
       target: builder
@@ -26,3 +46,4 @@ services:
       - VITE_API_BASE_URL=http://localhost:8000/api
     depends_on:
       - backend
+

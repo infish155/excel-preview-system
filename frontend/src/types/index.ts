@@ -5,15 +5,21 @@ export interface ExcelData {
   data: CellData[][];
 }
 
-// Metadata for a single sheet
 export interface SheetMetadata {
   totalRows: number;
 }
 
-// The response from the initial file upload
-export interface UploadResponse {
+// The final successful result from a job
+export interface JobSuccessResult {
   dataId: string;
   sheets: {
     [sheetName: string]: SheetMetadata;
   };
+}
+
+// The response from the status polling endpoint
+export interface JobStatusResponse {
+  jobId: string;
+  status: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE';
+  result: JobSuccessResult | { status: string } | string | null;
 }

@@ -1,22 +1,19 @@
 import React, { useState } from 'react';
-// 导入新的上传函数和类型
 import { uploadFile } from '../services/api';
-import type { UploadResponse } from '../types';
 
 interface FileUploaderProps {
-  // 关键修改：更新 onUploadSuccess 的参数类型为 UploadResponse
-  onUploadSuccess: (data: UploadResponse) => void;
+  onUploadStart: (jobId: string) => void;
   onError: (message: string) => void;
-  onLoading: (isLoading: boolean) => void;
+  isLoading: boolean;
 }
 
-export const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess, onError, onLoading }) => {
+export const FileUploader: React.FC<FileUploaderProps> = ({ onUploadStart, onError, isLoading }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setSelectedFile(event.target.files[0]);
-      onError(""); // 清除旧错误
+      onError(""); // 在选择新文件时清除旧的错误信息
     }
   };
 
@@ -25,17 +22,14 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess, onE
       onError("Please select a file first.");
       return;
     }
-    onLoading(true);
     try {
-      // 调用新的上传函数
+      // 调用返回 jobId 的上传函数
       const response = await uploadFile(selectedFile);
-      // response.data 现在是 UploadResponse 类型，正好符合 onUploadSuccess 的要求
-      onUploadSuccess(response.data);
+      // 调用 onUploadStart 并传递 jobId，启动父组件的轮询流程
+      onUploadStart(response.data.jobId);
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || "An error occurred during upload.";
       onError(errorMessage);
-    } finally {
-      onLoading(false);
     }
   };
 
@@ -51,10 +45,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onUploadSuccess, onE
       </div>
       <button
         onClick={handleUpload}
+        disabled={!selectedFile || isLoading}
         className="px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 disabled:bg-gray-400 disabled:cursor-not-allowed"
-        disabled={!selectedFile}
       >
-        Upload & Process
+        {isLoading ? '正在处理...' : '上传并处理'}
       </button>
     </div>
   );
